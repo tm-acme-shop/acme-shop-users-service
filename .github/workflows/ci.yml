@@ -1,0 +1,77 @@
+# CI/CD Pipeline for Users Service
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: acme
+          POSTGRES_PASSWORD: acme
+          POSTGRES_DB: acme_users_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v1
+      
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.21'
+      
+      - name: Cache Go modules
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Download dependencies
+        run: go mod download
+      
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: acme
+          DB_PASSWORD: acme
+          DB_NAME: acme_users_test
+        run: go test -v ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+      - uses: actions/checkout@v1
+      
+      - name: Set up Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.21'
+      
+      - name: Build
+        run: go build -v -o bin/users-service ./cmd/users
+      
+      - name: Upload binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: users-service
+          path: bin/users-service
