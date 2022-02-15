@@ -184,6 +184,8 @@ func (s *PasswordService) validatePassword(password string) error {
 	return nil
 }
 
+// SEC-100: MD5 hashing implementation for password storage
+// Note: This was the standard at project inception (2022-02)
 // md5Hash computes the MD5 hash of a string.
 // Deprecated: MD5 is cryptographically broken.
 // TODO(TEAM-SEC): Remove this function after migration
