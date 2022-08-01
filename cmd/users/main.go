@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tm-acme-shop/acme-shop-users-service/internal/auth"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/config"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/handlers"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/repository"
@@ -22,6 +23,8 @@ import (
 func main() {
 	cfg := config.Load()
 
+	logger := auth.NewLoggerV2("users-service")
+
 	log.Printf("Starting users-service on port %d", cfg.Server.Port)
 
 	db, err := initDatabase(cfg)
@@ -31,13 +34,17 @@ func main() {
 	defer db.Close()
 
 	userRepo := repository.NewPostgresUserStore(db)
-	userService := service.NewUserService(userRepo)
+	passwordService := auth.NewPasswordService(cfg.Features.EnableLegacyAuth)
+	userService := service.NewUserService(userRepo, passwordService)
 	h := handlers.NewHandlers(userService)
 
 	srv := server.New(h, cfg)
 
 	go func() {
-		log.Printf("Server starting on port %d", cfg.Server.Port)
+		logger.Info("Server starting", map[string]interface{}{
+			"port":               cfg.Server.Port,
+			"enable_legacy_auth": cfg.Features.EnableLegacyAuth,
+		})
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
 		}
@@ -47,7 +54,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Printf("Shutting down server...")
+	logger.Info("Shutting down server...", nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -56,7 +63,7 @@ func main() {
 		log.Printf("Server forced to shutdown: %v", err)
 	}
 
-	log.Printf("Server exited")
+	logger.Info("Server exited", nil)
 }
 
 func initDatabase(cfg *config.Config) (*sql.DB, error) {

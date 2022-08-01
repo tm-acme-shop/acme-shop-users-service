@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Features FeatureFlags
 }
 
 type ServerConfig struct {
@@ -32,6 +33,11 @@ func (d *DatabaseConfig) ConnectionString() string {
 	)
 }
 
+type FeatureFlags struct {
+	EnableLegacyAuth bool
+	EnableNewAuth    bool
+}
+
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -45,6 +51,10 @@ func Load() *Config {
 			User:     getEnv("DB_USER", "acme"),
 			Password: getEnv("DB_PASSWORD", ""),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
+		},
+		Features: FeatureFlags{
+			EnableLegacyAuth: getEnvBool("ENABLE_LEGACY_AUTH", true),
+			EnableNewAuth:    getEnvBool("ENABLE_NEW_AUTH", true),
 		},
 	}
 }
@@ -60,6 +70,15 @@ func getEnvInt(key string, defaultValue int) int {
 	if value := os.Getenv(key); value != "" {
 		if intVal, err := strconv.Atoi(value); err == nil {
 			return intVal
+		}
+	}
+	return defaultValue
+}
+
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		if boolVal, err := strconv.ParseBool(value); err == nil {
+			return boolVal
 		}
 	}
 	return defaultValue

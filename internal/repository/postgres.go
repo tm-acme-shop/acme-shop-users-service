@@ -6,22 +6,27 @@ import (
 	"log"
 	"time"
 
+	"github.com/tm-acme-shop/acme-shop-users-service/internal/auth"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/service"
 )
 
 // PostgresUserStore implements user storage using PostgreSQL.
 type PostgresUserStore struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *auth.LoggerV2
 }
 
 // NewPostgresUserStore creates a new PostgreSQL-backed user store.
 func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
-	return &PostgresUserStore{db: db}
+	return &PostgresUserStore{
+		db:     db,
+		logger: auth.NewLoggerV2("postgres-user-store"),
+	}
 }
 
 // GetByID retrieves a user by their unique identifier.
 func (s *PostgresUserStore) GetByID(ctx context.Context, id string) (*service.User, error) {
-	log.Printf("Fetching user by ID: %s", id)
+	s.logger.Info("fetching user by ID", map[string]interface{}{"user_id": id})
 
 	query := `
 		SELECT id, email, name
@@ -49,7 +54,7 @@ func (s *PostgresUserStore) GetByID(ctx context.Context, id string) (*service.Us
 
 // Create creates a new user in the store.
 func (s *PostgresUserStore) Create(ctx context.Context, email, name, passwordHash string) (*service.User, error) {
-	log.Printf("Creating user with email: %s", email)
+	s.logger.Info("creating user", map[string]interface{}{"email": email})
 
 	now := time.Now().UTC()
 	id := generateUserID()
@@ -76,7 +81,7 @@ func (s *PostgresUserStore) Create(ctx context.Context, email, name, passwordHas
 
 // List retrieves all users.
 func (s *PostgresUserStore) List(ctx context.Context) ([]*service.User, error) {
-	log.Printf("Listing users")
+	s.logger.Info("listing users", nil)
 
 	query := `SELECT id, email, name FROM users ORDER BY created_at DESC`
 
@@ -104,6 +109,13 @@ func (s *PostgresUserStore) GetPasswordHash(ctx context.Context, id string) (str
 	query := `SELECT password_hash FROM users WHERE id = $1`
 	err := s.db.QueryRowContext(ctx, query, id).Scan(&hash)
 	return hash, err
+}
+
+// UpdatePasswordHash updates the password hash for a user.
+func (s *PostgresUserStore) UpdatePasswordHash(ctx context.Context, id, hash string) error {
+	query := `UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3`
+	_, err := s.db.ExecContext(ctx, query, hash, time.Now().UTC(), id)
+	return err
 }
 
 func generateUserID() string {
