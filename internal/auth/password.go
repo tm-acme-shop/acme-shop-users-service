@@ -42,6 +42,7 @@ func NewPasswordService(enableLegacy bool) *PasswordService {
 	}
 }
 
+// SEC-125: bcrypt hashing introduced for new user registrations
 // HashPassword hashes a password using bcrypt (recommended).
 func (s *PasswordService) HashPassword(password string) (string, error) {
 	if err := s.validatePassword(password); err != nil {
