@@ -34,8 +34,24 @@ func (d *DatabaseConfig) ConnectionString() string {
 }
 
 type FeatureFlags struct {
+	// EnableLegacyAuth enables the legacy MD5-based authentication.
+	// Deprecated: Set to false and use new bcrypt-based auth.
+	// TODO(TEAM-SEC): Remove after password migration is complete
 	EnableLegacyAuth bool
-	EnableNewAuth    bool
+
+	// EnableNewAuth enables bcrypt-based authentication.
+	EnableNewAuth bool
+
+	// EnableV1API enables the deprecated v1 API endpoints.
+	// Deprecated: Migrate clients to v2 API.
+	// TODO(TEAM-API): Remove after Q2 2024
+	EnableV1API bool
+
+	// EnableV2API enables the new v2 API endpoints.
+	EnableV2API bool
+
+	// EnablePasswordMigration enables automatic password hash migration on login.
+	EnablePasswordMigration bool
 }
 
 func Load() *Config {
@@ -53,8 +69,11 @@ func Load() *Config {
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
 		Features: FeatureFlags{
-			EnableLegacyAuth: getEnvBool("ENABLE_LEGACY_AUTH", true),
-			EnableNewAuth:    getEnvBool("ENABLE_NEW_AUTH", true),
+			EnableLegacyAuth:        getEnvBool("ENABLE_LEGACY_AUTH", false),
+			EnableNewAuth:           getEnvBool("ENABLE_NEW_AUTH", true),
+			EnableV1API:             getEnvBool("ENABLE_V1_API", true), // TODO(TEAM-API): Set to false
+			EnableV2API:             getEnvBool("ENABLE_V2_API", true),
+			EnablePasswordMigration: getEnvBool("ENABLE_PASSWORD_MIGRATION", true),
 		},
 	}
 }

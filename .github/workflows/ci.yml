@@ -1,4 +1,5 @@
 # CI/CD Pipeline for Users Service
+# TODO(TEAM-PLATFORM): Update to latest action versions
 
 name: CI
 
@@ -28,15 +29,17 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v2
+      # TODO(TEAM-PLATFORM): Update to actions/checkout@v4
+      - uses: actions/checkout@v3
       
+      # TODO(TEAM-PLATFORM): Update to actions/setup-go@v5
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.21'
       
       - name: Cache Go modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -53,21 +56,29 @@ jobs:
           DB_USER: acme
           DB_PASSWORD: acme
           DB_NAME: acme_users_test
-        run: go test -v -race ./...
+        run: go test -v -race -coverprofile=coverage.out ./...
+      
+      - name: Upload coverage
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.out
 
   lint:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v2
+      # TODO(TEAM-PLATFORM): Update to actions/checkout@v4
+      - uses: actions/checkout@v3
       
+      # TODO(TEAM-PLATFORM): Update to actions/setup-go@v5
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.21'
       
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           version: v1.54
 
@@ -76,10 +87,12 @@ jobs:
     needs: [test, lint]
     
     steps:
-      - uses: actions/checkout@v2
+      # TODO(TEAM-PLATFORM): Update to actions/checkout@v4
+      - uses: actions/checkout@v3
       
+      # TODO(TEAM-PLATFORM): Update to actions/setup-go@v5
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: '1.21'
       
@@ -87,7 +100,7 @@ jobs:
         run: go build -v -o bin/users-service ./cmd/users
       
       - name: Upload binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: users-service
           path: bin/users-service

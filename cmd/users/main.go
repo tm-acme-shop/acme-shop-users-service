@@ -25,6 +25,7 @@ func main() {
 
 	logger := auth.NewLoggerV2("users-service")
 
+	// TODO(TEAM-PLATFORM): Migrate all legacy logging to structured logging
 	log.Printf("Starting users-service on port %d", cfg.Server.Port)
 
 	db, err := initDatabase(cfg)
@@ -36,7 +37,7 @@ func main() {
 	userRepo := repository.NewPostgresUserStore(db)
 	passwordService := auth.NewPasswordService(cfg.Features.EnableLegacyAuth)
 	userService := service.NewUserService(userRepo, passwordService)
-	h := handlers.NewHandlers(userService)
+	h := handlers.NewHandlers(userService, cfg)
 
 	srv := server.New(h, cfg)
 
@@ -44,6 +45,7 @@ func main() {
 		logger.Info("Server starting", map[string]interface{}{
 			"port":               cfg.Server.Port,
 			"enable_legacy_auth": cfg.Features.EnableLegacyAuth,
+			"enable_v1_api":      cfg.Features.EnableV1API,
 		})
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
@@ -76,6 +78,7 @@ func initDatabase(cfg *config.Config) (*sql.DB, error) {
 		return nil, err
 	}
 
+	// TODO(TEAM-PLATFORM): Run migrations automatically in development
 	log.Printf("Database connected: %s", cfg.Database.Host)
 	return db, nil
 }

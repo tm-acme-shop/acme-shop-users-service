@@ -6,19 +6,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/auth"
+	"github.com/tm-acme-shop/acme-shop-users-service/internal/config"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/service"
 )
 
 // Handlers holds all HTTP handlers for the users service.
 type Handlers struct {
 	userService *service.UserService
+	config      *config.Config
 	logger      *auth.LoggerV2
 }
 
 // NewHandlers creates a new handlers instance.
-func NewHandlers(userService *service.UserService) *Handlers {
+func NewHandlers(userService *service.UserService, cfg *config.Config) *Handlers {
 	return &Handlers{
 		userService: userService,
+		config:      cfg,
 		logger:      auth.NewLoggerV2("handlers"),
 	}
 }
@@ -47,9 +50,20 @@ func (h *Handlers) GetUser(c *gin.Context) {
 }
 
 // GetUserV1 handles GET /api/v1/users/:id
+// Deprecated: Use GetUser instead.
+// TODO(TEAM-API): Remove after v1 API deprecation
 func (h *Handlers) GetUserV1(c *gin.Context) {
 	userID := c.Param("id")
-	log.Printf("GetUserV1 called for user: %s", userID)
+
+	// TODO(TEAM-API): Migrate all clients to v2 API
+	log.Printf("[WARN] GetUserV1 called for user: %s - v1 API is deprecated", userID)
+
+	if !h.config.Features.EnableV1API {
+		c.JSON(http.StatusGone, gin.H{
+			"error": "v1 API is deprecated, please use v2",
+		})
+		return
+	}
 
 	user, err := h.userService.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
@@ -95,8 +109,18 @@ func (h *Handlers) CreateUser(c *gin.Context) {
 }
 
 // CreateUserV1 handles POST /api/v1/users
+// Deprecated: Use CreateUser instead.
+// TODO(TEAM-API): Remove after v1 API deprecation
 func (h *Handlers) CreateUserV1(c *gin.Context) {
-	log.Printf("CreateUserV1 called")
+	// TODO(TEAM-API): Migrate all clients to v2 API
+	log.Printf("[WARN] CreateUserV1 called - v1 API is deprecated")
+
+	if !h.config.Features.EnableV1API {
+		c.JSON(http.StatusGone, gin.H{
+			"error": "v1 API is deprecated, please use v2",
+		})
+		return
+	}
 
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -106,6 +130,8 @@ func (h *Handlers) CreateUserV1(c *gin.Context) {
 		return
 	}
 
+	// WARNING: v1 API uses deprecated MD5 hashing
+	// TODO(TEAM-SEC): Remove MD5 usage
 	user, err := h.userService.CreateUserLegacy(c.Request.Context(), req.Email, req.Name, req.Password)
 	if err != nil {
 		log.Printf("Failed to create user: %v", err)
@@ -140,8 +166,17 @@ func (h *Handlers) ListUsers(c *gin.Context) {
 }
 
 // ListUsersV1 handles GET /api/v1/users
+// Deprecated: Use ListUsers instead.
+// TODO(TEAM-API): Remove after v1 API deprecation
 func (h *Handlers) ListUsersV1(c *gin.Context) {
-	log.Printf("ListUsersV1 called")
+	log.Printf("[WARN] ListUsersV1 called - v1 API is deprecated")
+
+	if !h.config.Features.EnableV1API {
+		c.JSON(http.StatusGone, gin.H{
+			"error": "v1 API is deprecated, please use v2",
+		})
+		return
+	}
 
 	users, err := h.userService.ListUsers(c.Request.Context())
 	if err != nil {

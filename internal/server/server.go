@@ -54,7 +54,7 @@ func (s *Server) setupMiddleware() {
 
 		latency := time.Since(start)
 
-		// New structured logging
+		// Structured logging (preferred)
 		s.logger.Info("request completed", map[string]interface{}{
 			"status":  c.Writer.Status(),
 			"method":  c.Request.Method,
@@ -62,7 +62,7 @@ func (s *Server) setupMiddleware() {
 			"latency": latency.String(),
 		})
 
-		// Legacy logging
+		// TODO(TEAM-PLATFORM): Remove legacy logging after migration
 		log.Printf("%s %s %d %s", c.Request.Method, path, c.Writer.Status(), latency)
 	})
 }
@@ -71,20 +71,25 @@ func (s *Server) setupRoutes() {
 	// Health check
 	s.router.GET("/health", s.handler.Health)
 
-	// V1 API routes (legacy)
-	v1 := s.router.Group("/api/v1")
-	{
-		v1.GET("/users", s.handler.ListUsersV1)
-		v1.GET("/users/:id", s.handler.GetUserV1)
-		v1.POST("/users", s.handler.CreateUserV1)
+	// V1 API routes (deprecated)
+	// TODO(TEAM-API): Remove after migration complete
+	if s.config.Features.EnableV1API {
+		v1 := s.router.Group("/api/v1")
+		{
+			v1.GET("/users", s.handler.ListUsersV1)
+			v1.GET("/users/:id", s.handler.GetUserV1)
+			v1.POST("/users", s.handler.CreateUserV1)
+		}
 	}
 
-	// V2 API routes (new)
-	v2 := s.router.Group("/api/v2")
-	{
-		v2.GET("/users", s.handler.ListUsers)
-		v2.GET("/users/:id", s.handler.GetUser)
-		v2.POST("/users", s.handler.CreateUser)
+	// V2 API routes (preferred)
+	if s.config.Features.EnableV2API {
+		v2 := s.router.Group("/api/v2")
+		{
+			v2.GET("/users", s.handler.ListUsers)
+			v2.GET("/users/:id", s.handler.GetUser)
+			v2.POST("/users", s.handler.CreateUser)
+		}
 	}
 }
 
