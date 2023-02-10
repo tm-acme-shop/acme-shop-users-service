@@ -212,6 +212,7 @@ func isHexString(s string) bool {
 	return true
 }
 
+// SEC-150: DEPRECATED - MD5 password hashing no longer recommended
 // HashPasswordMD5 hashes a password using MD5.
 // Deprecated: Use HashPassword with bcrypt instead. MD5 is insecure.
 // TODO(TEAM-SEC): Remove after all passwords are migrated
