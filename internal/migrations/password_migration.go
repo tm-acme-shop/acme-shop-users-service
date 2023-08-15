@@ -9,6 +9,7 @@ import (
 	"github.com/tm-acme-shop/acme-shop-shared-go/utils"
 )
 
+// SEC-175: Password migration service for MD5→bcrypt upgrade
 // PasswordMigrator handles migration of legacy password hashes.
 // TODO(TEAM-SEC): Run this migration to upgrade all MD5/SHA1 hashes to bcrypt
 type PasswordMigrator struct {
