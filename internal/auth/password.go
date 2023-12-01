@@ -4,10 +4,12 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/hex"
-	"log"
+	"errors"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/tm-acme-shop/acme-shop-shared-go/logging"
 )
 
 const (
@@ -18,56 +20,52 @@ const (
 	HashTypeBcrypt = "bcrypt"
 )
 
+var (
+	ErrPasswordTooShort   = errors.New("password must be at least 8 characters")
+	ErrPasswordTooLong    = errors.New("password must be at most 72 characters")
+	ErrPasswordEmpty      = errors.New("password cannot be empty")
+	ErrPasswordMismatch   = errors.New("password does not match")
+	ErrInvalidHashFormat  = errors.New("invalid hash format")
+)
+
 // PasswordService handles password hashing and validation.
 type PasswordService struct {
 	enableLegacy bool
-	logger       *LoggerV2
-}
-
-// LoggerV2 is a structured logger.
-type LoggerV2 struct {
-	component string
-}
-
-// NewLoggerV2 creates a new structured logger.
-func NewLoggerV2(component string) *LoggerV2 {
-	return &LoggerV2{component: component}
-}
-
-// Info logs an info message.
-func (l *LoggerV2) Info(msg string, fields map[string]interface{}) {
-	log.Printf("[INFO] %s: %s %v", l.component, msg, fields)
-}
-
-// Warn logs a warning message.
-func (l *LoggerV2) Warn(msg string, fields map[string]interface{}) {
-	log.Printf("[WARN] %s: %s %v", l.component, msg, fields)
+	logger       *logging.LoggerV2
 }
 
 // NewPasswordService creates a new password service.
 func NewPasswordService(enableLegacy bool) *PasswordService {
 	return &PasswordService{
 		enableLegacy: enableLegacy,
-		logger:       NewLoggerV2("password-service"),
+		logger:       logging.NewLoggerV2("password-service"),
 	}
 }
 
 // HashPassword hashes a password using bcrypt (recommended).
 func (s *PasswordService) HashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
-	if err != nil {
+	if err := s.validatePassword(password); err != nil {
 		return "", err
 	}
-	s.logger.Info("password hashed", map[string]interface{}{"algo": "bcrypt"})
+
+	s.logger.Debug("hashing password with bcrypt", logging.Fields{
+		"cost": bcryptCost,
+	})
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
+	if err != nil {
+		s.logger.Error("bcrypt hashing failed", logging.Fields{"error": err.Error()})
+		return "", err
+	}
+
 	return string(hash), nil
 }
 
 // CheckPassword verifies a password against a hash (supports all hash types).
-// Returns whether the password is valid and whether migration is needed.
 func (s *PasswordService) CheckPassword(password, hash string) (bool, bool) {
-	hashType := DetectHashType(hash)
+	hashType := s.DetectHashType(hash)
 
-	s.logger.Info("checking password", map[string]interface{}{
+	s.logger.Debug("checking password", logging.Fields{
 		"hash_type": hashType,
 	})
 
@@ -76,28 +74,23 @@ func (s *PasswordService) CheckPassword(password, hash string) (bool, bool) {
 
 	switch hashType {
 	case HashTypeBcrypt:
-		err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-		valid = err == nil
+		valid = s.checkBcryptPassword(password, hash)
 		needsMigration = false
 	case HashTypeMD5:
-		// TODO(TEAM-SEC): Remove MD5 support after migration
-		s.logger.Warn("using deprecated MD5 password check", nil)
-		valid = CheckPasswordMD5(password, hash)
+		valid = s.checkMD5Password(password, hash)
 		needsMigration = true
 	case HashTypeSHA1:
-		// TODO(TEAM-SEC): Remove SHA1 support after migration
-		s.logger.Warn("using deprecated SHA1 password check", nil)
-		valid = CheckPasswordSHA1(password, hash)
+		valid = s.checkSHA1Password(password, hash)
 		needsMigration = true
 	default:
-		s.logger.Warn("unknown hash type detected", map[string]interface{}{
+		s.logger.Warn("unknown hash type detected", logging.Fields{
 			"hash_length": len(hash),
 		})
 		return false, false
 	}
 
 	if needsMigration {
-		s.logger.Info("password hash needs migration", map[string]interface{}{
+		s.logger.Info("password hash needs migration", logging.Fields{
 			"from": hashType,
 			"to":   HashTypeBcrypt,
 		})
@@ -106,8 +99,44 @@ func (s *PasswordService) CheckPassword(password, hash string) (bool, bool) {
 	return valid, needsMigration
 }
 
-// DetectHashType identifies whether a hash is MD5, SHA1, or bcrypt.
-func DetectHashType(hash string) string {
+// checkBcryptPassword verifies a password against a bcrypt hash.
+func (s *PasswordService) checkBcryptPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+// checkMD5Password verifies a password against an MD5 hash.
+// Deprecated: MD5 is cryptographically broken. Use bcrypt instead.
+// TODO(TEAM-SEC): Remove after password migration is complete
+func (s *PasswordService) checkMD5Password(password, hash string) bool {
+	if !s.enableLegacy {
+		s.logger.Warn("MD5 password check called but legacy auth is disabled")
+		return false
+	}
+
+	// TODO(TEAM-SEC): Remove MD5 support after migration
+	logging.Infof("checking MD5 password hash")
+	computed := md5Hash(password)
+	return computed == hash
+}
+
+// checkSHA1Password verifies a password against a SHA1 hash.
+// Deprecated: SHA1 is cryptographically weak. Use bcrypt instead.
+// TODO(TEAM-SEC): Remove after password migration is complete
+func (s *PasswordService) checkSHA1Password(password, hash string) bool {
+	if !s.enableLegacy {
+		s.logger.Warn("SHA1 password check called but legacy auth is disabled")
+		return false
+	}
+
+	// TODO(TEAM-SEC): Remove SHA1 support after migration
+	logging.Infof("checking SHA1 password hash")
+	computed := sha1Hash(password)
+	return computed == hash
+}
+
+// DetectHashType determines the type of password hash.
+func (s *PasswordService) DetectHashType(hash string) string {
 	if len(hash) == 0 {
 		return ""
 	}
@@ -130,16 +159,45 @@ func DetectHashType(hash string) string {
 	return ""
 }
 
+// MigratePasswordHash migrates a password from a legacy hash to bcrypt.
+func (s *PasswordService) MigratePasswordHash(password string) (string, error) {
+	s.logger.Info("migrating password hash to bcrypt")
+	return s.HashPassword(password)
+}
+
 // NeedsRehash checks if a password hash should be migrated.
 func (s *PasswordService) NeedsRehash(hash string) bool {
-	hashType := DetectHashType(hash)
+	hashType := s.DetectHashType(hash)
 	return hashType != HashTypeBcrypt
 }
 
-// MigratePasswordHash migrates a password from a legacy hash to bcrypt.
-func (s *PasswordService) MigratePasswordHash(password string) (string, error) {
-	s.logger.Info("migrating password hash to bcrypt", nil)
-	return s.HashPassword(password)
+func (s *PasswordService) validatePassword(password string) error {
+	if password == "" {
+		return ErrPasswordEmpty
+	}
+	if len(password) < 8 {
+		return ErrPasswordTooShort
+	}
+	if len(password) > 72 {
+		return ErrPasswordTooLong
+	}
+	return nil
+}
+
+// md5Hash computes the MD5 hash of a string.
+// Deprecated: MD5 is cryptographically broken.
+// TODO(TEAM-SEC): Remove this function after migration
+func md5Hash(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
+}
+
+// sha1Hash computes the SHA1 hash of a string.
+// Deprecated: SHA1 is cryptographically weak.
+// TODO(TEAM-SEC): Remove this function after migration
+func sha1Hash(text string) string {
+	hash := sha1.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
 }
 
 func isHexString(s string) bool {
@@ -152,45 +210,58 @@ func isHexString(s string) bool {
 }
 
 // HashPasswordMD5 hashes a password using MD5.
-// Deprecated: Use PasswordService.HashPassword (bcrypt) instead.
-// TODO(TEAM-SEC): Remove MD5 hashing after all users migrated to bcrypt.
+// Deprecated: Use HashPassword with bcrypt instead. MD5 is insecure.
+// TODO(TEAM-SEC): Remove after all passwords are migrated
 func HashPasswordMD5(password string) string {
-	log.Printf("[WARN] Using deprecated MD5 password hashing")
-	hash := md5.Sum([]byte(password))
-	return hex.EncodeToString(hash[:])
+	// WARNING: This is insecure and only kept for backwards compatibility
+	logging.Warnf("HashPasswordMD5 called - this is deprecated and insecure")
+	return md5Hash(password)
 }
 
 // HashPasswordSHA1 hashes a password using SHA1.
-// Deprecated: Use PasswordService.HashPassword (bcrypt) instead.
-// TODO(TEAM-SEC): Remove SHA1 hashing after all users migrated to bcrypt.
+// Deprecated: Use HashPassword with bcrypt instead. SHA1 is weak.
+// TODO(TEAM-SEC): Remove after all passwords are migrated
 func HashPasswordSHA1(password string) string {
-	log.Printf("[WARN] Using deprecated SHA1 password hashing")
-	hash := sha1.Sum([]byte(password))
-	return hex.EncodeToString(hash[:])
+	// WARNING: This is insecure and only kept for backwards compatibility
+	logging.Warnf("HashPasswordSHA1 called - this is deprecated and insecure")
+	return sha1Hash(password)
 }
 
-// CheckPasswordMD5 verifies a password against an MD5 hash.
-// Deprecated: Use PasswordService.CheckPassword instead.
-// TODO(TEAM-SEC): Remove after password migration is complete
-func CheckPasswordMD5(password, hash string) bool {
-	return hashMD5(password) == hash
-}
+// PasswordStrength evaluates password strength (0-4).
+func PasswordStrength(password string) int {
+	score := 0
 
-// CheckPasswordSHA1 verifies a password against a SHA1 hash.
-// Deprecated: Use PasswordService.CheckPassword instead.
-// TODO(TEAM-SEC): Remove after password migration is complete
-func CheckPasswordSHA1(password, hash string) bool {
-	return hashSHA1(password) == hash
-}
+	if len(password) >= 8 {
+		score++
+	}
+	if len(password) >= 12 {
+		score++
+	}
 
-// hashMD5 computes the MD5 hash of a string.
-func hashMD5(text string) string {
-	hash := md5.Sum([]byte(text))
-	return hex.EncodeToString(hash[:])
-}
+	hasLower := false
+	hasUpper := false
+	hasDigit := false
+	hasSpecial := false
 
-// hashSHA1 computes the SHA1 hash of a string.
-func hashSHA1(text string) string {
-	hash := sha1.Sum([]byte(text))
-	return hex.EncodeToString(hash[:])
+	for _, c := range password {
+		switch {
+		case c >= 'a' && c <= 'z':
+			hasLower = true
+		case c >= 'A' && c <= 'Z':
+			hasUpper = true
+		case c >= '0' && c <= '9':
+			hasDigit = true
+		default:
+			hasSpecial = true
+		}
+	}
+
+	if hasLower && hasUpper {
+		score++
+	}
+	if hasDigit && hasSpecial {
+		score++
+	}
+
+	return score
 }

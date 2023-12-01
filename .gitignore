@@ -5,15 +5,17 @@ bin/
 *.dll
 *.so
 *.dylib
+users-service
 
 # Test binary
 *.test
 
-# Output of the go coverage tool
+# Output of go coverage
 *.out
+coverage.out
 
-# Go workspace file
-go.work
+# Dependency directories
+vendor/
 
 # IDE
 .idea/
@@ -25,14 +27,19 @@ go.work
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment files
 .env
 .env.local
-*.env
+.env.*.local
 
 # Logs
 *.log
 logs/
 
-# Vendor
-vendor/
+# Secrets - TODO(TEAM-SEC): Never commit secrets
+*.pem
+*.key
+secrets/
+
+# Docker
+docker-compose.override.yml

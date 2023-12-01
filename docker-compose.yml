@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  users-service:
+    build: .
+    ports:
+      - "8081:8081"
+    environment:
+      - ENVIRONMENT=development
+      - SERVER_PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=acme
+      - DB_PASSWORD=acme
+      - DB_NAME=acme_users
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev-secret-key
+      - ENABLE_V1_API=true
+      - ENABLE_V2_API=true
+      - ENABLE_DEBUG_MODE=true
+      # TODO(TEAM-SEC): Disable debug mode in production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - acme-network
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: acme
+      POSTGRES_PASSWORD: acme
+      POSTGRES_DB: acme_users
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acme -d acme_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acme-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acme-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  acme-network:
+    driver: bridge

@@ -1,0 +1,48 @@
+# Users Service Production Configuration
+# Inherits from config.yaml and overrides production-specific values
+
+service:
+  environment: production
+
+server:
+  host: 0.0.0.0
+  port: 8081
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+
+database:
+  # Production database settings
+  # Host and credentials from environment
+  ssl_mode: require
+  max_open_conns: 50
+  max_idle_conns: 10
+  max_lifetime: 30m
+
+redis:
+  # Production Redis settings
+  # Host and credentials from environment
+  db: 0
+  ttl: 30m
+
+jwt:
+  expiration: 8h
+  issuer: acme-users-service
+
+features:
+  # Deprecated features - disabled in production
+  enable_legacy_auth: false
+  enable_v1_api: false  # TODO(TEAM-API): Enable temporarily during migration
+  enable_v2_api: true
+  
+  enable_password_migration: true
+  enable_user_cache: true
+  
+  # CRITICAL: Must be false in production
+  enable_debug_mode: false
+  enable_metrics: true
+  enable_rate_limiting: true
+
+logging:
+  level: warn
+  format: json
