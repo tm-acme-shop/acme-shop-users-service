@@ -33,6 +33,7 @@ func (h *Handlers) GetUser(c *gin.Context) {
 	})
 }
 
+// API-200: DEPRECATED - /api/v1/users endpoints scheduled for removal
 // GetUserV1 handles GET /api/v1/users/:id
 // Deprecated: Use GetUser instead.
 // TODO(TEAM-API): Remove after v1 API deprecation
