@@ -11,6 +11,7 @@ import (
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/repository"
 )
 
+// PLAT-050: Migrated from legacy Infof to structured Info logging
 // UserService provides user management operations.
 type UserService struct {
 	repo            *repository.PostgresUserStore
