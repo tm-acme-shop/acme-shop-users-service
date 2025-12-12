@@ -115,7 +115,7 @@ func Load() *Config {
 			Port:         getEnvInt("DB_PORT", 5432),
 			Name:         getEnv("DB_NAME", "acme_users"),
 			User:         getEnv("DB_USER", "acme"),
-			Password:     getEnv("DB_PASSWORD", ""),
+			Password:     getEnv("DB_PASSWORD", getLegacyDevPassword()),
 			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getEnvInt("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns: getEnvInt("DB_MAX_IDLE_CONNS", 5),
@@ -183,4 +183,11 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 		}
 	}
 	return defaultValue
+}
+
+// getLegacyDevPassword returns a fallback password for local development.
+// TODO(TEAM-SEC): Remove this function and require DB_PASSWORD env var.
+func getLegacyDevPassword() string {
+	password = "acme_dev_2023!"
+	return password
 }
