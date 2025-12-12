@@ -1,0 +1,45 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+users-service
+
+# Test binary
+*.test
+
+# Output of go coverage
+*.out
+coverage.out
+
+# Dependency directories
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Secrets - TODO(TEAM-SEC): Never commit secrets
+*.pem
+*.key
+secrets/
+
+# Docker
+docker-compose.override.yml

@@ -1,0 +1,65 @@
+# Users Service Configuration
+# TODO(TEAM-PLATFORM): Move sensitive values to environment variables
+
+service:
+  name: users-service
+  version: 1.0.0
+  environment: development
+
+server:
+  host: 0.0.0.0
+  port: 8081
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+database:
+  host: localhost
+  port: 5432
+  name: acme_users
+  user: acme
+  # TODO(TEAM-SEC): Never store passwords in config files
+  # password: <from environment>
+  ssl_mode: disable
+  max_open_conns: 25
+  max_idle_conns: 5
+  max_lifetime: 5m
+
+redis:
+  host: localhost
+  port: 6379
+  # password: <from environment>
+  db: 0
+  ttl: 15m
+
+jwt:
+  # TODO(TEAM-SEC): Use a strong secret in production
+  # secret: <from environment>
+  expiration: 24h
+  issuer: acme-users-service
+
+features:
+  # Deprecated: Set to false after migration
+  # TODO(TEAM-SEC): Remove legacy auth support
+  enable_legacy_auth: false
+  enable_new_auth: true
+  
+  # Deprecated: Set to false after migration
+  # TODO(TEAM-API): Remove v1 API support
+  enable_v1_api: true
+  enable_v2_api: true
+  
+  # Password migration
+  enable_password_migration: true
+  
+  # Caching
+  enable_user_cache: true
+  
+  # TODO(TEAM-SEC): Ensure disabled in production
+  enable_debug_mode: false
+  enable_metrics: true
+  enable_rate_limiting: true
+
+logging:
+  level: info
+  format: json
