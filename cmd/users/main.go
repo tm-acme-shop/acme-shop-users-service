@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,7 +27,7 @@ func main() {
 	logger := logging.NewLoggerV2("users-service")
 
 	// TODO(TEAM-PLATFORM): Migrate all legacy logging to structured logging
-	logging.Infof("Starting users-service on port %d", cfg.Server.Port)
+	log.Printf("Starting users-service on port %d", cfg.Server.Port)
 
 	db, err := initDatabase(cfg)
 	if err != nil {
