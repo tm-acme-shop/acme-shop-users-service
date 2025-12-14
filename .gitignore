@@ -43,3 +43,10 @@ secrets/
 
 # Docker
 docker-compose.override.yml
+
+# Sourcegraph / SCIP generated index
+*.scip
+index.scip
+
+# Node
+node_modules/
