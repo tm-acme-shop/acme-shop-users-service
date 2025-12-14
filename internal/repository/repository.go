@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/tm-acme-shop/acme-shop-shared-go/interfaces"
 	"github.com/tm-acme-shop/acme-shop-shared-go/models"
 )
 
@@ -36,8 +37,10 @@ type UserCacheRepository interface {
 
 // Ensure implementations satisfy interfaces
 var (
-	_ UserRepository      = (*PostgresUserStore)(nil)
-	_ UserRepositoryV1    = (*PostgresUserStoreV1)(nil)
+	_ interfaces.UserStore   = (*PostgresUserStore)(nil)
+	_ interfaces.UserStoreV1 = (*PostgresUserStoreV1)(nil)
+	_ UserRepository         = (*PostgresUserStore)(nil)
+	_ UserRepositoryV1       = (*PostgresUserStoreV1)(nil)
 	_ UserCacheRepository = (*RedisUserCache)(nil)
 	_ UserCacheRepository = (*NoOpUserCache)(nil)
 	_ UserCacheRepository = (*InMemoryUserCache)(nil)
