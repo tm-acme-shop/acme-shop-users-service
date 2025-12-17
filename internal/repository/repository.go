@@ -38,10 +38,11 @@ type UserCacheRepository interface {
 // Ensure implementations satisfy interfaces
 var (
 	_ interfaces.UserStore   = (*PostgresUserStore)(nil)
+	_ interfaces.UserStore   = (*CachedUserStore)(nil)
 	_ interfaces.UserStoreV1 = (*PostgresUserStoreV1)(nil)
 	_ UserRepository         = (*PostgresUserStore)(nil)
 	_ UserRepositoryV1       = (*PostgresUserStoreV1)(nil)
-	_ UserCacheRepository = (*RedisUserCache)(nil)
-	_ UserCacheRepository = (*NoOpUserCache)(nil)
-	_ UserCacheRepository = (*InMemoryUserCache)(nil)
+	_ UserCacheRepository    = (*RedisUserCache)(nil)
+	_ UserCacheRepository    = (*NoOpUserCache)(nil)
+	_ UserCacheRepository    = (*InMemoryUserCache)(nil)
 )
