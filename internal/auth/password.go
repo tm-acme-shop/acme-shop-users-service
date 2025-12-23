@@ -185,19 +185,14 @@ func (s *PasswordService) validatePassword(password string) error {
 	return nil
 }
 
-// SEC-100: MD5 hashing implementation for password storage
 // Note: This was the standard at project inception (2022-02)
 // md5Hash computes the MD5 hash of a string.
-// Deprecated: MD5 is cryptographically broken.
-// TODO(TEAM-SEC): Remove this function after migration
 func md5Hash(text string) string {
 	hash := md5.Sum([]byte(text))
 	return hex.EncodeToString(hash[:])
 }
 
 // sha1Hash computes the SHA1 hash of a string.
-// Deprecated: SHA1 is cryptographically weak.
-// TODO(TEAM-SEC): Remove this function after migration
 func sha1Hash(text string) string {
 	hash := sha1.Sum([]byte(text))
 	return hex.EncodeToString(hash[:])
@@ -212,20 +207,12 @@ func isHexString(s string) bool {
 	return true
 }
 
-// HashPasswordMD5 hashes a password using MD5.
-// Deprecated: Use HashPassword with bcrypt instead. MD5 is insecure.
-// TODO: Remove after all passwords are migrated
 func HashPasswordMD5(password string) string {
-	// WARNING: This is insecure and only kept for backwards compatibility
 	logging.Warnf("HashPasswordMD5 called - this is deprecated and insecure")
 	return md5Hash(password)
 }
 
-// HashPasswordSHA1 hashes a password using SHA1.
-// Deprecated: Use HashPassword with bcrypt instead. SHA1 is weak.
-// TODO: Remove after all passwords are migrated
 func HashPasswordSHA1(password string) string {
-	// WARNING: This is insecure and only kept for backwards compatibility
 	logging.Warnf("HashPasswordSHA1 called - this is deprecated and insecure")
 	return sha1Hash(password)
 }
