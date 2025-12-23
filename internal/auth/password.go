@@ -21,11 +21,11 @@ const (
 )
 
 var (
-	ErrPasswordTooShort   = errors.New("password must be at least 8 characters")
-	ErrPasswordTooLong    = errors.New("password must be at most 72 characters")
-	ErrPasswordEmpty      = errors.New("password cannot be empty")
-	ErrPasswordMismatch   = errors.New("password does not match")
-	ErrInvalidHashFormat  = errors.New("invalid hash format")
+	ErrPasswordTooShort  = errors.New("password must be at least 8 characters")
+	ErrPasswordTooLong   = errors.New("password must be at most 72 characters")
+	ErrPasswordEmpty     = errors.New("password cannot be empty")
+	ErrPasswordMismatch  = errors.New("password does not match")
+	ErrInvalidHashFormat = errors.New("invalid hash format")
 )
 
 // PasswordService handles password hashing and validation.
@@ -212,10 +212,9 @@ func isHexString(s string) bool {
 	return true
 }
 
-// SEC-150: DEPRECATED - MD5 password hashing no longer recommended
 // HashPasswordMD5 hashes a password using MD5.
 // Deprecated: Use HashPassword with bcrypt instead. MD5 is insecure.
-// TODO(TEAM-SEC): Remove after all passwords are migrated
+// TODO: Remove after all passwords are migrated
 func HashPasswordMD5(password string) string {
 	// WARNING: This is insecure and only kept for backwards compatibility
 	logging.Warnf("HashPasswordMD5 called - this is deprecated and insecure")
@@ -224,7 +223,7 @@ func HashPasswordMD5(password string) string {
 
 // HashPasswordSHA1 hashes a password using SHA1.
 // Deprecated: Use HashPassword with bcrypt instead. SHA1 is weak.
-// TODO(TEAM-SEC): Remove after all passwords are migrated
+// TODO: Remove after all passwords are migrated
 func HashPasswordSHA1(password string) string {
 	// WARNING: This is insecure and only kept for backwards compatibility
 	logging.Warnf("HashPasswordSHA1 called - this is deprecated and insecure")
