@@ -83,12 +83,12 @@ func (s *Server) loggingMiddleware() gin.HandlerFunc {
 
 		// New structured logging
 		s.logger.Info("request completed", logging.Fields{
-			"status":   c.Writer.Status(),
-			"method":   c.Request.Method,
-			"path":     path,
-			"query":    query,
-			"latency":  latency.String(),
-			"client":   c.ClientIP(),
+			"status":  c.Writer.Status(),
+			"method":  c.Request.Method,
+			"path":    path,
+			"query":   query,
+			"latency": latency.String(),
+			"client":  c.ClientIP(),
 		})
 
 		// TODO(TEAM-PLATFORM): Remove legacy logging after migration
@@ -137,7 +137,7 @@ func (s *Server) setupRoutes() {
 			v1Protected.Use(s.handler.AuthMiddlewareV1())
 			{
 				v1Protected.GET("/users", s.handler.ListUsersV1)
-				v1Protected.GET("/users/:id", s.handler.GetUserV1)
+				// DEPRECATED: v1Protected.GET("/users/:id", s.handler.GetUserDeprecated)
 				v1Protected.POST("/users", s.handler.CreateUserV1)
 			}
 		}
