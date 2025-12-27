@@ -34,14 +34,14 @@ func (h *Handlers) GetUser(c *gin.Context) {
 }
 
 // API-200: DEPRECATED - /api/v1/users endpoints scheduled for removal
-// GetUserV1 handles GET /api/v1/users/:id
+// GetUserDeprecated handles GET /api/v1/users/:id
 // Deprecated: Use GetUser instead.
 // TODO(TEAM-API): Remove after v1 API deprecation
-func (h *Handlers) GetUserV1(c *gin.Context) {
+func (h *Handlers) GetUserDeprecated(c *gin.Context) {
 	userID := c.Param("id")
 
 	// TODO(TEAM-API): Migrate all clients to v2 API
-	logging.Infof("GetUserV1 called for user: %s", userID)
+	logging.Infof("GetUserDeprecated called for user: %s", userID)
 
 	if !h.config.Features.EnableV1API {
 		c.JSON(http.StatusGone, ErrorResponse{
@@ -51,7 +51,7 @@ func (h *Handlers) GetUserV1(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserV1(c.Request.Context(), userID)
+	user, err := h.userService.GetUserDeprecated(c.Request.Context(), userID)
 	if err != nil {
 		h.handleError(c, err)
 		return

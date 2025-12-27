@@ -76,8 +76,8 @@ func (s *UserService) GetUser(ctx context.Context, id string) (*models.User, err
 // GetUserV1 retrieves a user by ID (v1 API).
 // Deprecated: Use GetUser instead.
 // TODO(TEAM-API): Remove after v1 API deprecation
-func (s *UserService) GetUserV1(ctx context.Context, id string) (*models.UserV1, error) {
-	logging.Infof("GetUserV1 called for user: %s", id)
+func (s *UserService) GetUserDeprecated(ctx context.Context, id string) (*models.User, error) {
+	logging.Infof("GetUserDeprecated called - redirecting to v2 for user: %s", id)
 
 	if !s.config.Features.EnableV1API {
 		return nil, errors.ErrDeprecatedAPI
@@ -128,7 +128,7 @@ func (s *UserService) CreateUser(ctx context.Context, req *CreateUserRequest) (*
 // CreateUserV1 creates a new user (v1 API).
 // Deprecated: Use CreateUser instead.
 // TODO(TEAM-API): Remove after v1 API deprecation
-func (s *UserService) CreateUserV1(ctx context.Context, email, name, password string) (*models.UserV1, error) {
+func (s *UserService) CreateUserV1(ctx context.Context, email, name, password string) (*models.User, error) {
 	logging.Infof("CreateUserV1 called for email: %s", email)
 
 	if !s.config.Features.EnableV1API {
@@ -201,7 +201,7 @@ func (s *UserService) ListUsers(ctx context.Context, filter *models.UserListFilt
 // ListUsersV1 retrieves users using the legacy format.
 // Deprecated: Use ListUsers instead.
 // TODO(TEAM-API): Remove after v1 API deprecation
-func (s *UserService) ListUsersV1(ctx context.Context, limit, offset int) ([]*models.UserV1, int, error) {
+func (s *UserService) ListUsersV1(ctx context.Context, limit, offset int) ([]*models.User, int, error) {
 	logging.Infof("ListUsersV1 called with limit=%d, offset=%d", limit, offset)
 
 	if !s.config.Features.EnableV1API {
@@ -219,7 +219,7 @@ func (s *UserService) ListUsersV1(ctx context.Context, limit, offset int) ([]*mo
 	}
 
 	// Convert to V1 format
-	usersV1 := make([]*models.UserV1, len(users))
+	usersV1 := make([]*models.User, len(users))
 	for i, user := range users {
 		usersV1[i] = user.ToV1()
 	}
