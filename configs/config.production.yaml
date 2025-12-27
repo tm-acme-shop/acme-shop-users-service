@@ -31,7 +31,7 @@ jwt:
 
 features:
   # Deprecated features - disabled in production
-  enable_legacy_auth: false
+  enable_new_auth: false
   enable_v1_api: false  # TODO(TEAM-API): Enable temporarily during migration
   enable_v2_api: true
   

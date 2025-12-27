@@ -106,7 +106,7 @@ Configuration is loaded from environment variables. See `configs/config.yaml` fo
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `ENABLE_LEGACY_AUTH` | Enable legacy MD5 authentication | `false` |
+| `ENABLE_NEW_AUTH` | Enable new authentication mode | `false` |
 | `ENABLE_V1_API` | Enable deprecated V1 API | `true` |
 | `ENABLE_V2_API` | Enable V2 API | `true` |
 | `ENABLE_PASSWORD_MIGRATION` | Auto-migrate password hashes | `true` |
