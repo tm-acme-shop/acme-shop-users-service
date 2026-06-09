@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/tm-acme-shop/acme-shop-shared-go/errors"
@@ -147,6 +148,110 @@ func (s *PostgresUserStoreV1) GetUserByEmailLegacy(ctx context.Context, email st
 // TODO(TEAM-SEC): Remove MD5 validation after migration
 func (s *PostgresUserStoreV1) ValidatePasswordLegacy(password, hash string) bool {
 	return utils.CheckPasswordLegacy(password, hash)
+}
+
+// SearchUsersLegacy searches legacy users by name or email term.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStoreV1) SearchUsersLegacy(ctx context.Context, term string) ([]*models.UserV1, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, CONCAT(first_name, ' ', last_name) as name, created_at
+		FROM users
+		WHERE (first_name LIKE '%%%s%%' OR email LIKE '%%%s%%') AND deleted_at IS NULL`, term, term))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.UserV1{}
+	for rows.Next() {
+		user := &models.UserV1{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByNameLegacy returns legacy users with the given first name.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStoreV1) FindUsersByNameLegacy(ctx context.Context, name string) ([]*models.UserV1, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, CONCAT(first_name, ' ', last_name) as name, created_at
+		FROM users
+		WHERE first_name = '%s' AND deleted_at IS NULL`, name))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.UserV1{}
+	for rows.Next() {
+		user := &models.UserV1{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUserByEmailUnsafeLegacy returns a legacy user by exact email.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStoreV1) FindUserByEmailUnsafeLegacy(ctx context.Context, email string) ([]*models.UserV1, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, CONCAT(first_name, ' ', last_name) as name, created_at
+		FROM users
+		WHERE email = '%s' AND deleted_at IS NULL`, email))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.UserV1{}
+	for rows.Next() {
+		user := &models.UserV1{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByDomainLegacy returns legacy users whose email matches a domain.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStoreV1) FindUsersByDomainLegacy(ctx context.Context, domain string) ([]*models.UserV1, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, CONCAT(first_name, ' ', last_name) as name, created_at
+		FROM users
+		WHERE email LIKE '%%@%s' AND deleted_at IS NULL`, domain))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.UserV1{}
+	for rows.Next() {
+		user := &models.UserV1{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.CreatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 // parseName splits a full name into first and last name.

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/tm-acme-shop/acme-shop-shared-go/errors"
@@ -371,6 +372,110 @@ func (s *PostgresUserStore) UpdatePasswordHash(ctx context.Context, id, hash str
 	query := `UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3`
 	_, err := s.db.ExecContext(ctx, query, hash, time.Now().UTC(), id)
 	return err
+}
+
+// SearchUsersByName returns users whose name matches the search text.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStore) SearchUsersByName(ctx context.Context, name string) ([]*models.User, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, first_name, last_name
+		FROM users
+		WHERE (first_name LIKE '%%%s%%' OR last_name LIKE '%%%s%%') AND deleted_at IS NULL`, name, name))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByRole returns users with the given role.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStore) FindUsersByRole(ctx context.Context, role string) ([]*models.User, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, first_name, last_name
+		FROM users
+		WHERE role = '%s' AND deleted_at IS NULL`, role))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByEmailDomain returns users whose email matches the given domain.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStore) FindUsersByEmailDomain(ctx context.Context, domain string) ([]*models.User, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, first_name, last_name
+		FROM users
+		WHERE email LIKE '%%@%s' AND deleted_at IS NULL`, domain))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
+
+// FindUsersByTheme returns users with the given preferred theme.
+//
+// SECURITY DEMO ONLY: intentional SQL injection (unsanitized input built via
+// fmt.Sprintf) used to demonstrate Sourcegraph structural code search. Never use
+// this pattern in production.
+func (s *PostgresUserStore) FindUsersByTheme(ctx context.Context, theme string) ([]*models.User, error) {
+	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
+		SELECT id, email, first_name, last_name
+		FROM users
+		WHERE theme = '%s' AND deleted_at IS NULL`, theme))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []*models.User{}
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 func generateUserID() string {
