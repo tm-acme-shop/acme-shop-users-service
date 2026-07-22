@@ -41,7 +41,7 @@ jwt:
 features:
   # Deprecated: Set to false after migration
   # TODO(TEAM-SEC): Remove legacy auth support
-  enable_legacy_auth: false
+  enable_new_auth: false
   enable_new_auth: true
   
   # Deprecated: Set to false after migration

@@ -40,11 +40,11 @@ func (h *Handlers) HealthDetailed(c *gin.Context) {
 			MemSys:       memStats.Sys,
 		},
 		Features: FeatureInfo{
-			V1APIEnabled:           h.config.Features.EnableV1API,
-			V2APIEnabled:           h.config.Features.EnableV2API,
-			LegacyAuthEnabled:      h.config.Features.EnableLegacyAuth,
-			PasswordMigration:      h.config.Features.EnablePasswordMigration,
-			UserCacheEnabled:       h.config.Features.EnableUserCache,
+			V1APIEnabled:      h.config.Features.EnableV1API,
+			V2APIEnabled:      h.config.Features.EnableV2API,
+			LegacyAuthEnabled: h.config.Features.EnableNewAuth,
+			PasswordMigration: h.config.Features.EnablePasswordMigration,
+			UserCacheEnabled:  h.config.Features.EnableUserCache,
 		},
 	})
 }
@@ -53,7 +53,7 @@ func (h *Handlers) HealthDetailed(c *gin.Context) {
 func (h *Handlers) Ready(c *gin.Context) {
 	// Check database connection
 	// In a real implementation, this would check DB and Redis connectivity
-	
+
 	c.JSON(http.StatusOK, ReadyResponse{
 		Ready: true,
 	})
@@ -102,12 +102,12 @@ func (h *Handlers) DebugInfo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, DebugInfoResponse{
 		Config: DebugConfig{
-			Environment:        h.config.Environment,
-			EnableV1API:        h.config.Features.EnableV1API,
-			EnableLegacyAuth:   h.config.Features.EnableLegacyAuth,
-			EnableDebugMode:    h.config.Features.EnableDebugMode,
-			DatabaseHost:       h.config.Database.Host,
-			RedisHost:          h.config.Redis.Host,
+			Environment:     h.config.Environment,
+			EnableV1API:     h.config.Features.EnableV1API,
+			EnableNewAuth:   h.config.Features.EnableNewAuth,
+			EnableDebugMode: h.config.Features.EnableDebugMode,
+			DatabaseHost:    h.config.Database.Host,
+			RedisHost:       h.config.Redis.Host,
 		},
 	})
 }
@@ -138,11 +138,11 @@ type RuntimeInfo struct {
 }
 
 type FeatureInfo struct {
-	V1APIEnabled           bool `json:"v1_api_enabled"`
-	V2APIEnabled           bool `json:"v2_api_enabled"`
-	LegacyAuthEnabled      bool `json:"legacy_auth_enabled"`
-	PasswordMigration      bool `json:"password_migration_enabled"`
-	UserCacheEnabled       bool `json:"user_cache_enabled"`
+	V1APIEnabled      bool `json:"v1_api_enabled"`
+	V2APIEnabled      bool `json:"v2_api_enabled"`
+	LegacyAuthEnabled bool `json:"legacy_auth_enabled"`
+	PasswordMigration bool `json:"password_migration_enabled"`
+	UserCacheEnabled  bool `json:"user_cache_enabled"`
 }
 
 type ReadyResponse struct {
@@ -154,10 +154,10 @@ type DebugInfoResponse struct {
 }
 
 type DebugConfig struct {
-	Environment        string `json:"environment"`
-	EnableV1API        bool   `json:"enable_v1_api"`
-	EnableLegacyAuth   bool   `json:"enable_legacy_auth"`
-	EnableDebugMode    bool   `json:"enable_debug_mode"`
-	DatabaseHost       string `json:"database_host"`
-	RedisHost          string `json:"redis_host"`
+	Environment     string `json:"environment"`
+	EnableV1API     bool   `json:"enable_v1_api"`
+	EnableNewAuth   bool   `json:"enable_new_auth"`
+	EnableDebugMode bool   `json:"enable_debug_mode"`
+	DatabaseHost    string `json:"database_host"`
+	RedisHost       string `json:"redis_host"`
 }

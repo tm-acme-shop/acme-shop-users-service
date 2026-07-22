@@ -64,10 +64,10 @@ type JWTConfig struct {
 }
 
 type FeatureFlags struct {
-	// EnableLegacyAuth enables the legacy MD5-based authentication.
+	// EnableNewAuth enables the legacy MD5-based authentication.
 	// Deprecated: Set to false and use new bcrypt-based auth.
 	// TODO(TEAM-SEC): Remove after password migration is complete
-	EnableLegacyAuth bool
+	EnableNewAuth bool
 
 	// EnableNewAuth enables bcrypt-based authentication.
 	EnableNewAuth bool
@@ -134,7 +134,7 @@ func Load() *Config {
 			Issuer:     getEnv("JWT_ISSUER", "acme-users-service"),
 		},
 		Features: FeatureFlags{
-			EnableLegacyAuth:        getEnvBool("ENABLE_LEGACY_AUTH", false),
+			EnableNewAuth:           getEnvBool("ENABLE_NEW_AUTH", false),
 			EnableNewAuth:           getEnvBool("ENABLE_NEW_AUTH", true),
 			EnableV1API:             getEnvBool("ENABLE_V1_API", true), // TODO(TEAM-API): Set to false
 			EnableV2API:             getEnvBool("ENABLE_V2_API", true),

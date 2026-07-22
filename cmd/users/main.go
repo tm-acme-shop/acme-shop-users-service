@@ -10,13 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tm-acme-shop/acme-shop-shared-go/logging"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/auth"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/config"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/handlers"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/repository"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/server"
 	"github.com/tm-acme-shop/acme-shop-users-service/internal/service"
-	"github.com/tm-acme-shop/acme-shop-shared-go/logging"
 
 	_ "github.com/lib/pq"
 )
@@ -41,7 +41,7 @@ func main() {
 	// TODO(TEAM-SEC): Remove legacy user store after migration
 	legacyRepo := repository.NewPostgresUserStoreV1(db)
 
-	passwordService := auth.NewPasswordService(cfg.Features.EnableLegacyAuth)
+	passwordService := auth.NewPasswordService(cfg.Features.EnableNewAuth)
 	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.Expiration)
 	sessionService := auth.NewSessionService(cfg.Redis)
 
@@ -67,9 +67,9 @@ func main() {
 
 	go func() {
 		logger.Info("Server starting", logging.Fields{
-			"port":               cfg.Server.Port,
-			"enable_legacy_auth": cfg.Features.EnableLegacyAuth,
-			"enable_v1_api":      cfg.Features.EnableV1API,
+			"port":            cfg.Server.Port,
+			"enable_new_auth": cfg.Features.EnableNewAuth,
+			"enable_v1_api":   cfg.Features.EnableV1API,
 		})
 		if err := srv.Start(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start", logging.Fields{"error": err.Error()})
